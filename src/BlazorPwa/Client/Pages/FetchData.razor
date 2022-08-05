@@ -1,0 +1,103 @@
+﻿@page "/fetchdata"
+@using BlazorPwa.Shared
+@inject WeatherForecastService Service
+
+<PageTitle>Weather forecast</PageTitle>
+
+<h1>Weather forecast</h1>
+
+<p>This component demonstrates fetching data from the server.</p>
+
+<div class="row">
+    <div class="col-md-12">
+        <Sync />
+    </div>
+</div>
+<hr />
+<div class="row">
+    <div class="col-md-8">
+        @if (forecasts == null)
+        {
+            <p><em>Loading...</em></p>
+        }
+        else
+        {
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Temp. (C)</th>
+                        <th>Temp. (F)</th>
+                        <th>Summary</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var forecast in forecasts)
+                    {
+                        <tr>
+                            <td>@forecast.Date.ToShortDateString()</td>
+                            <td>@forecast.TemperatureC</td>
+                            <td>@forecast.TemperatureF</td>
+                            <td>@forecast.Summary</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+    <div class="col-md-4">
+        <EditForm Model="model" OnValidSubmit="SaveWeatherForecastAsync">
+            <DataAnnotationsValidator />
+
+            <div class="mb-3">
+                <label>Date</label>
+                <InputDate class="form-control" @bind-Value="model.Date" />
+            </div>
+
+            <div class="mb-3">
+                <label>Temp. °C</label>
+                <InputNumber class="form-control" @bind-Value="model.TemperatureC" />
+            </div>
+
+            <div class="mb-3">
+                <label>Summary</label>
+                <InputText class="form-control" @bind-Value="model.Summary" />
+            </div>
+
+            <div class="mb-3">
+                <button class="btn btn-primary">Save</button>
+                <button type="button" @onclick="Cancel" class="btn btn-outline-primary">Cancel</button>
+            </div>
+        </EditForm>
+    </div>
+</div>
+
+
+@code {
+    private IEnumerable<WeatherForecast>? forecasts;
+
+    private WeatherForecast model = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadWeatherForecasts();
+    }
+
+    private async Task LoadWeatherForecasts() 
+        => forecasts = await Service.GetWeatherForecastsAsync();
+
+    void Cancel() => model = new();
+
+    async Task SaveWeatherForecastAsync()
+    {
+        try
+        {
+            await Service.SaveWeatherForecastAsync(model);
+            await LoadWeatherForecasts();
+        }
+        finally
+        {
+            model = new();
+        }
+    }
+}
